@@ -1,16 +1,21 @@
 from typing import Dict, List
-from app.utils.db import get_schema_info
+from app.services.database_manager import get_db_manager
 
 class SchemaReader:
-    @staticmethod
-    def get_formatted_schema() -> str:
+    def __init__(self):
+        self.db_manager = get_db_manager()
+    
+    def get_formatted_schema(self) -> str:
         """
         Get the database schema formatted as a string for the LLM prompt.
         
         Returns:
             str: Formatted schema string
         """
-        schema_info = get_schema_info()
+        if not self.db_manager.is_connected():
+            return "No database connected. Please connect to a database first."
+        
+        schema_info = self.db_manager.get_schema_info()
         formatted_schema = []
         
         for table_name, columns in schema_info.items():
@@ -35,8 +40,7 @@ class SchemaReader:
         
         return "\n\n".join(formatted_schema)
     
-    @staticmethod
-    def get_schema_summary() -> Dict[str, List[str]]:
+    def get_schema_summary(self) -> Dict[str, List[str]]:
         """
         Get a simplified schema summary with just table names and column names.
         Useful for quick reference in the UI.
@@ -44,7 +48,10 @@ class SchemaReader:
         Returns:
             Dict[str, List[str]]: Dictionary mapping table names to lists of column names
         """
-        schema_info = get_schema_info()
+        if not self.db_manager.is_connected():
+            return {}
+        
+        schema_info = self.db_manager.get_schema_info()
         return {
             table_name: [col["name"] for col in columns]
             for table_name, columns in schema_info.items()

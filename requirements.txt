@@ -16,6 +16,27 @@ numpy
 ctransformers[cuda]
 tqdm
 requests
-SpeechRecognition==3.10.0
-pyttsx3==2.90
-PyAudio==0.2.13
+SpeechRecognition
+pyttsx3
+PyAudio
+# Database drivers
+psycopg2-binary
+pyodbc
+# Alternative PostgreSQL driver (if psycopg2 fails)
+pg8000
+# MySQL driver
+pymysql
+# Oracle driver
+cx-oracle
+# Advanced data analysis
+scipy
+seaborn
+matplotlib
+openpyxl
+altair
+# Additional visualization libraries
+bokeh
+holoviews
+# Statistical analysis
+statsmodels
+scikit-learn

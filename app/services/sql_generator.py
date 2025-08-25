@@ -1,13 +1,14 @@
 from typing import Dict, Optional, Tuple
 from app.models.mistral_model import get_model
 from app.services.schema_reader import SchemaReader
-from app.utils.db import execute_query
+from app.services.database_manager import get_db_manager
 import sqlparse
 
 class SQLGenerator:
     def __init__(self):
         self.model = get_model()
         self.schema_reader = SchemaReader()
+        self.db_manager = get_db_manager()
 
     def _load_prompt_template(self) -> str:
         """Load the prompt template for SQL generation."""
@@ -50,6 +51,10 @@ SQL:"""
             Tuple[str, Dict]: Generated SQL query and query results
         """
         try:
+            # Check if database is connected
+            if not self.db_manager.is_connected():
+                raise Exception("No database connected. Please connect to a database first.")
+            
             # Get schema information
             schema_info = self.schema_reader.get_formatted_schema()
             
@@ -65,8 +70,8 @@ SQL:"""
                 strip_comments=True
             )
             
-            # Execute query
-            results = execute_query(formatted_sql)
+            # Execute query using database manager
+            results = self.db_manager.execute_query(formatted_sql)
             
             return formatted_sql, results
             

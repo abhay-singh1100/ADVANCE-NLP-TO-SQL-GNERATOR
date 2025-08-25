@@ -12,10 +12,6 @@ import json
 from io import BytesIO
 import base64
 from datetime import datetime
-import altair as alt
-import seaborn as sns
-import matplotlib.pyplot as plt
-from scipy import stats
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -467,22 +463,6 @@ if st.session_state.last_sql and st.session_state.last_results:
                         # Box plot
                         fig = px.box(df, y=selected_col, title=f"Box Plot of {selected_col}")
                         st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Statistical tests
-                    st.markdown("**Statistical Tests:**")
-                    
-                    # Normality test
-                    if len(df[selected_col].dropna()) > 3:
-                        try:
-                            stat, p_value = stats.normaltest(df[selected_col].dropna())
-                            st.write(f"**Normality Test (D'Agostino K^2):** Statistic = {stat:.4f}, p-value = {p_value:.4f}")
-                            
-                            if p_value < 0.05:
-                                st.warning("⚠️ Data may not be normally distributed (p < 0.05)")
-                            else:
-                                st.success("✅ Data appears to be normally distributed (p ≥ 0.05)")
-                        except:
-                            st.info("Could not perform normality test")
     
     with tab3:
         st.markdown("### 📈 Advanced Visualizations")
@@ -751,4 +731,4 @@ st.markdown("""
         <p>🚀 Built with advanced analytics using Streamlit, Plotly, Pandas, and AI-powered SQL generation</p>
         <p>📊 Features: Interactive Visualizations • Advanced Analytics • Data Export • Statistical Analysis • AI Insights</p>
     </div>
-""", unsafe_allow_html=True) 
+""", unsafe_allow_html=True)
