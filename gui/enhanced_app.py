@@ -148,24 +148,23 @@ with st.sidebar:
     st.markdown("---")
     
     # Database Schema Section
-    st.header("📊 Database Schema")
-    
-    # Check if database is connected before showing schema
-    db_manager = get_db_manager()
-    if db_manager.is_connected():
-        try:
-            schema_summary = schema_reader.get_schema_summary()
-            
-            for table_name, columns in schema_summary.items():
-                with st.expander(f"📋 {table_name}"):
-                    for column in columns:
-                        st.text(f"• {column}")
-        except Exception as e:
-            st.error(f"❌ Error reading schema: {str(e)}")
-            st.info("💡 Please check your database connection")
-    else:
-        st.warning("⚠️ No database connected")
-        st.info("💡 Connect to a database above to view schema")
+    with st.sidebar:
+        st.header("📊 Database Schema")
+        db_manager = get_db_manager()
+        if db_manager.is_connected():
+            try:
+                schema_reader = SchemaReader()
+                db_tables = schema_reader.get_all_databases_and_tables()
+                for db_name, tables in db_tables.items():
+                    with st.expander(f"📋 {db_name}"):
+                        for table in tables:
+                            st.text(f"• {table}")
+            except Exception as e:
+                st.error(f"❌ Error reading schema: {str(e)}")
+                st.info("💡 Please check your database connection")
+        else:
+            st.warning("⚠️ No database connected")
+            st.info("💡 Connect to a database above to view schema")
     
     st.markdown("---")
     st.header("⚙️ Analysis Options")

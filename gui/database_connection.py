@@ -1,6 +1,7 @@
 import streamlit as st
 from app.services.database_manager import get_db_manager
 import os
+from urllib.parse import quote_plus
 
 def render_database_connection():
     """Render the database connection configuration interface."""
@@ -155,6 +156,8 @@ def render_postgresql_connection():
             "username": username,
             "password": password
         }
+        if use_ssl:
+            connection_params["ssl"] = True
         
         if db_manager.connect("postgresql", **connection_params):
             st.sidebar.success("✅ Connected to PostgreSQL database!")
@@ -163,7 +166,6 @@ def render_postgresql_connection():
             st.sidebar.error("❌ Failed to connect to PostgreSQL database")
 
 def render_mysql_connection():
-    """Render MySQL connection form."""
     st.sidebar.subheader("MySQL Connection")
     
     col1, col2 = st.sidebar.columns(2)
@@ -177,31 +179,19 @@ def render_mysql_connection():
         username = st.text_input("Username:", value="root", key="mysql_username")
         password = st.text_input("Password:", type="password", key="mysql_password")
     
-    # Connection options
     col1, col2 = st.sidebar.columns(2)
     with col1:
         use_ssl = st.checkbox("Use SSL", value=False, key="mysql_ssl")
     with col2:
         charset = st.selectbox("Charset:", ["utf8mb4", "utf8", "latin1"], key="mysql_charset")
     
-    # Debug information
-    with st.sidebar.expander("🔍 Debug Info"):
-        st.write(f"**Host:** {host}")
-        st.write(f"**Port:** {port} (type: {type(port)})")
-        st.write(f"**Database:** {database}")
-        st.write(f"**Username:** {username}")
-        st.write(f"**Password:** {'*' * len(password) if password else 'None'}")
-        st.write(f"**Charset:** {charset}")
-    
     if st.sidebar.button("🔗 Connect to MySQL", key="mysql_connect"):
         db_manager = get_db_manager()
         
-        # Validate inputs
         if not host or not username or not database:
             st.sidebar.error("❌ Please fill in all required fields (Host, Username, Database)")
             return
         
-        # Ensure port is a valid integer
         try:
             port_int = int(port)
             if port_int < 1 or port_int > 65535:
@@ -216,11 +206,12 @@ def render_mysql_connection():
             "port": port_int,
             "database": database.strip(),
             "username": username.strip(),
-            "password": password.strip() if password else "",
+            "password": quote_plus(password.strip()) if password else "",
             "charset": charset
         }
+        if use_ssl:
+            connection_params["ssl"] = True
         
-        # Show connection attempt
         st.sidebar.info(f"🔄 Attempting to connect to MySQL at {host}:{port_int}...")
         
         if db_manager.connect("mysql", **connection_params):
@@ -228,7 +219,7 @@ def render_mysql_connection():
             st.rerun()
         else:
             st.sidebar.error("❌ Failed to connect to MySQL database")
-            st.sidebar.info("💡 Check if MySQL server is running and credentials are correct")
+            st.sidebar.info("💡 Check if MySQL server is running, credentials are correct, or SSL settings are required")
 
 def render_sqlserver_connection():
     """Render SQL Server connection form."""
@@ -304,7 +295,7 @@ def render_sqlserver_connection():
                     "port": port,
                     "database": target_database,
                     "username": username if auth_method == "SQL Server Authentication" else "",
-                    "password": password if auth_method == "SQL Server Authentication" else "",
+                    "password": quote_plus(password) if auth_method == "SQL Server Authentication" and password else "",
                     "driver": driver,
                     "trusted_connection": auth_method == "Windows Authentication",
                     "timeout": timeout,
@@ -422,7 +413,7 @@ def render_sqlserver_basic_connection():
                 "port": port,
                 "database": target_database,
                 "username": username if auth_method == "SQL Server Authentication" else "",
-                "password": password if auth_method == "SQL Server Authentication" else "",
+                "password": quote_plus(password) if auth_method == "SQL Server Authentication" and password else "",
                 "driver": driver,
                 "trusted_connection": auth_method == "Windows Authentication",
                 "timeout": timeout,
@@ -517,7 +508,7 @@ def render_sqlserver_advanced_connection():
             "port": port,
             "database": database,
             "username": username if auth_method != "Windows Authentication" else "",
-            "password": password if auth_method != "Windows Authentication" else "",
+            "password": quote_plus(password) if auth_method != "Windows Authentication" and password else "",
             "driver": driver,
             "trusted_connection": auth_method == "Windows Authentication",
             "timeout": timeout,
@@ -589,7 +580,7 @@ def render_sqlserver_connection_string():
     if auth_type == "Windows Authentication":
         connection_string += "Trusted_Connection=yes;"
     else:
-        connection_string += f"UID={username};PWD={password};"
+        connection_string += f"UID={username};PWD={quote_plus(password) if password else ''};"
     
     connection_string += f"Encrypt={'yes' if encrypt else 'no'};"
     if trust_cert:
@@ -622,7 +613,7 @@ def render_sqlserver_connection_string():
                 "port": 1433,
                 "database": database,
                 "username": username if auth_type != "Windows Authentication" else "",
-                "password": password if auth_type != "Windows Authentication" else "",
+                "password": quote_plus(password) if auth_type != "Windows Authentication" and password else "",
                 "driver": driver,
                 "trusted_connection": auth_type == "Windows Authentication",
                 "encrypt": encrypt,
@@ -649,7 +640,7 @@ def connect_sqlserver_preset(host, port, database, username, password, driver):
         "port": port,
         "database": database,
         "username": username,
-        "password": password,
+        "password": quote_plus(password) if password else "",
         "driver": driver
     }
     
@@ -855,7 +846,7 @@ def show_database_discovery(db_manager, host, port, username, password, driver, 
                     "port": port,
                     "database": selected_db,
                     "username": username if auth_method == "SQL Server Authentication" else "",
-                    "password": password if auth_method == "SQL Server Authentication" else "",
+                    "password": quote_plus(password) if auth_method == "SQL Server Authentication" and password else "",
                     "driver": driver,
                     "trusted_connection": auth_method == "Windows Authentication",
                     "timeout": timeout,
@@ -894,7 +885,7 @@ def test_sqlserver_connection(host, port, database, username, password, driver, 
         if auth_method == "Windows Authentication":
             connection_string = f"mssql+pyodbc://@{host}:{port}/{database}?driver={driver}"
         elif password:
-            connection_string = f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver={driver}"
+            connection_string = f"mssql+pyodbc://{username}:{quote_plus(password)}@{host}:{port}/{database}?driver={driver}"
         else:
             connection_string = f"mssql+pyodbc://{username}@{host}:{port}/{database}?driver={driver}"
         
@@ -943,8 +934,4 @@ def test_sqlserver_connection(host, port, database, username, password, driver, 
         elif "authentication" in error_msg:
             st.sidebar.warning("💡 Check username/password or try Windows Authentication")
         elif "driver" in error_msg:
-            st.sidebar.warning("💡 Install Microsoft ODBC Driver for SQL Server")
-        elif "encrypt" in error_msg:
-            st.sidebar.warning("💡 Try disabling encryption or enable 'Trust Server Certificate'")
-        elif "connection refused" in error_msg:
-            st.sidebar.warning("💡 Check if SQL Server is running and port is accessible")
+            st.sidebar
