@@ -67,7 +67,7 @@ class SchemaReader:
         db_type = conn_info.get('type', '').lower()
 
         all_db_tables = {}
-
+    ## get all tables from all databases
         if db_type == 'sqlite':
             # For SQLite, get tables from the current database
             tables_query = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
